@@ -186,14 +186,14 @@ public class DownloadInfo extends URLInfo {
         return parts;
     }
 
-    synchronized public void enableMultipart() {
+    synchronized public void enableMultipart(long partLength) {
         if (empty())
             throw new RuntimeException("Empty Download info, cant set multipart");
 
         if (!getRange())
             throw new RuntimeException("Server does not support RANGE, cant set multipart");
 
-        long count = getLength() / PART_LENGTH + 1;
+        long count = getLength() / partLength + 1;
 
         if (count > 2) {
             parts = new ArrayList<Part>();
@@ -203,17 +203,20 @@ public class DownloadInfo extends URLInfo {
                 Part part = new Part();
                 part.setNumber(i);
                 part.setStart(start);
-                part.setEnd(part.getStart() + PART_LENGTH - 1);
+                part.setEnd(part.getStart() + partLength - 1);
                 if (part.getEnd() > getLength() - 1)
                     part.setEnd(getLength() - 1);
                 part.setState(DownloadInfo.Part.States.QUEUED);
                 parts.add(part);
 
-                start += PART_LENGTH;
+                start += partLength;
             }
         }
     }
 
+    public void enableMultipart() {
+        enableMultipart(PART_LENGTH);
+    }
     /**
      * Check if we can continue download a file from new source. Check if new
      * souce has the same file length, title. and supports for range
